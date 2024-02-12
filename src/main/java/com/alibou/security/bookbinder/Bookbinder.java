@@ -1,4 +1,4 @@
-package com.alibou.security.bookbyuser;
+package com.alibou.security.bookbinder;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
