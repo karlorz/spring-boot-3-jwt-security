@@ -1,4 +1,4 @@
-package com.alibou.security.book;
+package com.alibou.security.bookbyuser;
 
 import lombok.Builder;
 import lombok.Getter;

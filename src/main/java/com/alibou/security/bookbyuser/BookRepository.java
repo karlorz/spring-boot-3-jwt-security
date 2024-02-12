@@ -1,4 +1,4 @@
-package com.alibou.security.book;
+package com.alibou.security.bookbyuser;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
