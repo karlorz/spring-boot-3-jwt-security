@@ -3,36 +3,47 @@ package com.alibou.security;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.web.client.RestTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class HelloControllerIntegrationTest {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class ServiceApplicationTests {
+    @LocalServerPort
+    private Integer port;
     @Container
-    public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withDatabaseName("jwt_security");
-
-    @Autowired
-    private MockMvc mockMvc;
+    @ServiceConnection
+    public static PostgreSQLContainer<?> postgreSQLContainer =
+            new PostgreSQLContainer<>(DockerImageName.parse("postgres:latest"))
+                    .withDatabaseName("jwt_security");
 
     @BeforeAll
-    static void beforeAll() {
+    static void setup() {
         postgreSQLContainer.start();
+        String jdbcUrl = postgreSQLContainer.getJdbcUrl();
+        String username = postgreSQLContainer.getUsername();
+        String password = postgreSQLContainer.getPassword();
+
+        // Set up the necessary tables and data using JDBC or an ORM of your choice
+        // Here's an example using Spring JDBC template
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(
+                DataSourceBuilder.create()
+                        .url(jdbcUrl)
+                        .username(username)
+                        .password(password)
+                        .build());
     }
 
     @AfterAll
@@ -40,17 +51,12 @@ public class HelloControllerIntegrationTest {
         postgreSQLContainer.stop();
     }
 
-    @DynamicPropertySource
-    static void postgresProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
-        registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
-    }
 
     @Test
-    public void testSayHello() throws Exception {
-        mockMvc.perform(get("/sayhello"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Hello, World!"));
+    public void sayHello_ReturnsHelloWorld() {
+        RestTemplate restTemplate = new RestTemplate();
+        String resourceUrl = "http://localhost:" + port + "/sayhello";
+        String response = restTemplate.getForObject(resourceUrl, String.class);
+        assertThat(response).isEqualTo("Hello World!");
     }
 }
