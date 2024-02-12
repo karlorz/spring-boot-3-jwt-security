@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: username
       POSTGRES_PASSWORD: password
       PGDATA: /data/postgres
+      POSTGRES_DB: jwt_security
     volumes:
       - postgres:/data/postgres
     ports:

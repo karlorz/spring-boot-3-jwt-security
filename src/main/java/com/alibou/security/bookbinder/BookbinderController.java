@@ -1,4 +1,4 @@
-package com.alibou.security.bookbyuser;
+package com.alibou.security.bookbinder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -9,20 +9,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v2/books")
 @RequiredArgsConstructor
-public class BookController {
+public class BookbinderController {
 
-    private final BookService service;
+    private final BookbinderService service;
 
     @PostMapping
     public ResponseEntity<?> save(
-            @RequestBody BookRequest request
+            @RequestBody BookbinderRequest request
     ) {
         service.save(request);
         return ResponseEntity.accepted().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<Book>> findAllBooks() {
+    public ResponseEntity<List<Bookbinder>> findAllBooks() {
         return ResponseEntity.ok(service.findAll());
     }
 }

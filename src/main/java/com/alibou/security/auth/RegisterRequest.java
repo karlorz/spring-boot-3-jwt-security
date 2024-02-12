@@ -16,5 +16,5 @@ public class RegisterRequest {
   private String lastname;
   private String email;
   private String password;
-  private Role role = Role.ADMIN;
+  private Role role = Role.MANAGER;
 }

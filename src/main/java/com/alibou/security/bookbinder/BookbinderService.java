@@ -3,6 +3,7 @@ package com.alibou.security.bookbinder;
 import com.alibou.security.auth.AuthenticationService;
 import com.alibou.security.user.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.security.core.Authentication;
@@ -13,27 +14,49 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class BookService {
+@Slf4j
+public class BookbinderService {
 
-    private final BookRepository repository;
+    private final BookbinderRepository repository;
     private final AuthenticationService authenticationService;
 
-    public void save(BookRequest request) {
-        var book = Book.builder()
-                .id(request.getId())
-                .author(request.getAuthor())
-                .isbn(request.getIsbn())
-                .build();
-        repository.save(book);
+    public void save(BookbinderRequest request) {
+        Integer currentUserId = getCurrentUserId();
+        if (currentUserId != null) {
+            if (request.getId() == null) {
+                // Save a new book
+                var book = Bookbinder.builder()
+                        .author(request.getAuthor())
+                        .isbn(request.getIsbn())
+                        .createdBy(currentUserId)
+                        .build();
+                repository.save(book);
+            } else {
+                // Update an existing book
+                Bookbinder existingBook = repository.findById(request.getId()).orElse(null);
+                if (existingBook == null) {
+                    log.info("The book with the specified ID does not exist");
+                }
+                if (existingBook.getCreatedBy().equals(currentUserId)) {
+                    existingBook.setAuthor(request.getAuthor());
+                    existingBook.setIsbn(request.getIsbn());
+                    repository.save(existingBook);
+                } else {
+                    log.info("The record is not owned by the current user");
+                }
+            }
+        } else {
+            log.info("Current user ID not available");
+        }
     }
 
-    public List<Book> findAll() {
+    public List<Bookbinder> findAll() {
         Integer currentUserId = getCurrentUserId();
         ExampleMatcher exampleMatcher = ExampleMatcher.matching()
                 .withMatcher("createdBy", matcher -> matcher.ignoreCase().exact())
                 .withIgnorePaths("id", "author", "isbn", "createDate", "lastModified", "lastModifiedBy");
-        Book exampleBook = Book.builder().createdBy(currentUserId).build();
-        Example<Book> example = Example.of(exampleBook, exampleMatcher);
+        Bookbinder exampleBook = Bookbinder.builder().createdBy(currentUserId).build();
+        Example<Bookbinder> example = Example.of(exampleBook, exampleMatcher);
         return repository.findAll(example);
     }
 

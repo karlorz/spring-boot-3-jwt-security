@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class BookRequest {
+public class BookbinderRequest {
 
     private Integer id;
     private String author;
